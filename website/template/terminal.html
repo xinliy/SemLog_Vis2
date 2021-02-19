@@ -1,0 +1,143 @@
+<!DOCTYPE html> {% load static %}
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Terminal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.css" integrity="sha256-QVBN0oT74UhpCtEo4Ko+k3sNo+ykJFBBtGduw13V9vw=" crossorigin="anonymous" />
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.4.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.js" integrity="sha256-qs5p0BFSqSvrstBxPvex+zdyrzcyGdHNeNmAirO2zc0=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.21.1/babel.min.js"></script>
+
+    <script>
+        var token = '{{csrf_token}}'
+        var interval = 1000;
+
+        function update_server_msg() {
+            var log_info;
+            $.ajax({
+                type: "POST",
+                data: {},
+                url: "/read_log/",
+                cache: false,
+                dataType: "json",
+                success: function(result, statues, xml) {
+                    log_info = result
+                },
+                async: false,
+                error: function(xhr, status, error) {
+                    console.log(error)
+                },
+
+            });
+            return log_info
+
+        }
+
+        var flag_stop = 0
+        var flag_classifier = 0
+        $(document).ready(function() {
+            $.ajaxSetup({
+                data: {
+                    csrfmiddlewaretoken: token
+                },
+            });
+        })
+
+        var interval = window.setInterval(function() {
+            var log_info = update_server_msg()
+            log_info = log_info['data'].split("@")
+            $("#server_log").empty()
+            for (let key in log_info) {
+                var content = log_info[key]
+                var text = document.createTextNode(log_info[key])
+                $("#server_log").append(text)
+                $("#server_log").append("<br />")
+                if (content.includes("succeeded")) {
+                    $(".operation_button").removeClass("disabled")
+                    if (flag_classifier == 1) {
+                        $(".training_button").removeClass("disabled")
+                    }
+                }
+                if (content.includes("classifier")) {
+                    flag_classifier = 1
+
+                }
+                if (content.includes("Query")) {
+                    flag_stop = 1
+                }
+            }
+
+            if (flag_stop == 1) {
+                clearInterval(interval)
+            }
+
+        }, 1000)
+        var element = $("#div_server_log")
+        element.scrollTop = element.scrollHeight;
+    </script>
+
+    <script src="{% static 'js/log_out.js' %}"></script>
+
+
+
+</head>
+
+
+<body>
+
+    <div class="ui secondary mini  menu" style="background-color: #145179;">
+        <a class="item">
+            <font color="white" size="4"> <b> RobCogVis </b></font>
+        </a>
+        <div class="right menu">
+
+            <img class="ui tiny circular image" src="{% static 'img/rob.jpg' %}" style="width: 25px;height: 25px;position: relative;top: 5px;" />
+            <a class="ui item">
+                <font color="white" size="2" id="log_out"> &nbsp; Logout</font>
+            </a>
+        </div>
+    </div>
+
+    <div class="ui center page grid">
+
+        <div class="row"></div>
+        <div class="row">
+            <div class="two wide column"></div>
+            <div class="ten wide column">
+                <div class="ui styled accordion">
+                    <div class="active title" style="background-color: #cfd8dd">
+                        <i class="dropdown icon"></i> Server state
+                    </div>
+                    <div class="active content" id="div_server_log" style="background-color: #e5e5e7;height:400px;font:16px/26px Georgia, Garamond, Serif;overflow:auto;">
+                        <p id="server_log"></p>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="three blue ui buttons" style="display:block;margin-left: 35%;margin-right: auto;margin-top: 1%;">
+        <a href="/download/" target="_blank">
+            <button class="ui massive button disabled operation_button" type="button">Download</button>
+        </a>
+        <a href="/view_images/" target="_blank">
+            <button class="ui massive button disabled operation_button" type="button">View</button>
+        </a>
+        <a href="/training/" target="_blank">
+
+            <button class="ui massive button disabled training_button" type="button">Train</button>
+        </a>
+    </div>
+
+    <Segment attached='bottom'>
+        <div class="ui secondary mini fluid menu" style="background-color: #145179;position: absolute;bottom: 1px">
+            <a class="item">
+                <font color="white" size="4"> <b> Logo1 </b></font>
+            </a>
+        </div>
+    </Segment>
+
+</body>
