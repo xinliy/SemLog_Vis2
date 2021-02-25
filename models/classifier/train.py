@@ -94,7 +94,7 @@ def train(dataset_path, num_epoch=10, test_split=0.2, model_saving_path=None, lr
             pred = torch.max(log_ps, dim=1)[1]
             acc.extend(list(torch.eq(pred, labels)))
             if n==1:
-                show_predictions_on_images(vis,images,pred,labels)
+                show_predictions_on_images(vis,images,pred,labels,dataset.class_list)
 
         # Plot accuracy in visdom
         accuracy = acc.count(1) / len(acc)
@@ -134,9 +134,10 @@ def train(dataset_path, num_epoch=10, test_split=0.2, model_saving_path=None, lr
         print("running_loss:", running_loss)
         print('accuracy', acc.count(1) / len(acc))
 
-def show_predictions_on_images(vis,images,pred,labels):
+def show_predictions_on_images(vis,images,pred,labels,class_list):
     """Show model predictions with Visdom."""
-    pred_list=','.join(str(i) for i in pred.tolist())
-    label_list=','.join(str(i) for i in labels.tolist())
+    class_list=[i[2:] if i[:2]=='MP' else i for i in class_list]
+    pred_list=','.join(str(i) for i in [class_list[i] for i in pred.tolist()])
+    label_list=','.join(str(i) for i in [class_list[i] for i in labels.tolist()])
     vis.images(images,opts={"title":"Predict:"+pred_list+os.linesep
                                   +"True:"+label_list})
